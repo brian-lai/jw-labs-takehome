@@ -41,6 +41,7 @@ func TestExtractRates(t *testing.T) {
         t.Fatalf("GetExchangeRates() error = %v", err)
     }
 
+    // extract the rates from the mock structure (should mimic the API response)
     btcRate, ethRate, err := coinbase.ExtractRates(exchangeRates)
     if err != nil {
         t.Fatalf("ExtractRates() error = %v", err)
@@ -90,7 +91,7 @@ func TestExchangeRates(t *testing.T) {
     // create new client
     client := coinbase.NewClient("random-api-key")
 
-    // instantiate new client
+    // get exchange rate
     exchangeRates, err := client.FetchExchangeRates()
 
     if err != nil {

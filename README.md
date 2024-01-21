@@ -47,3 +47,5 @@ To run tests for the crypto_investor logic, execute the following command in the
 ```
 go test
 ```
+
+Use optional `-v` for verbose

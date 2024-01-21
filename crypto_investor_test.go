@@ -2,58 +2,120 @@ package main
 
 import (
     "testing"
+    "jw-labs-takehome/coinbase"
+    "strconv"
+    "encoding/json"
 )
 
-// MockExchangeRatesFetcher is a mock implementation for testing
-type MockExchangeRatesFetcher struct{}
-
-func (m MockExchangeRatesFetcher) FetchExchangeRates() (float64, float64, error) {
-    return 50000.0, 4000.0, nil // Mocked rates for BTC and ETH
+// Use a mock exchange rate provider to test the ExtractRates() function
+type MockExchangeRates struct {
+    BTCRate float64
+    ETHRate float64
 }
 
-func TestCalculateCryptoAmounts(t *testing.T) {
-    btcRate, ethRate := .00002401, .00040487
+func (m MockExchangeRates) GetExchangeRates() (*coinbase.ExchangeRates, error) {
+    rates := &coinbase.ExchangeRates{
+        Data: struct {
+            Rates map[string]string `json:"rates"`
+        }{
+            Rates: map[string]string{
+                "BTC": strconv.FormatFloat(m.BTCRate, 'f', -1, 64),
+                "ETH": strconv.FormatFloat(m.ETHRate, 'f', -1, 64),
+            },
+        },
+    }
+    return rates, nil
+}
+
+// test the extract function
+func TestExtractRates(t *testing.T) {
+    // use mock exchange rates
+    exchangeRatesMocker := MockExchangeRates{
+        BTCRate: 0.000024, 
+        ETHRate: 0.000405,
+    }
+
+    exchangeRates, err := exchangeRatesMocker.GetExchangeRates()
+    if err != nil {
+        // this shouldn't fail since we're using a mock
+        t.Fatalf("GetExchangeRates() error = %v", err)
+    }
+
+    btcRate, ethRate, err := coinbase.ExtractRates(exchangeRates)
+    if err != nil {
+        t.Fatalf("ExtractRates() error = %v", err)
+    }
+
+    if btcRate != 0.000024 || ethRate != 0.000405 {
+        t.Errorf("ExtractRates() = %v, %v; want %v, %v", btcRate, ethRate, 0.000024, 0.000405)
+    }
+}
+
+// test the calculate function
+func TestCalculate(t *testing.T) {
     amountInUSD := 1000.0
+    btcRate := 0.00002 // Example rate
+    ethRate := 0.00030 // Example rate
+
     expectedBTC := (0.7 * amountInUSD) * btcRate
     expectedETH := (0.3 * amountInUSD) * ethRate
 
-    // CoinbaseAPI implements the ExchangeRatesFetcher interface
-    coinbaseAPI := CoinbaseAPI{}
+    btcAmount, ethAmount, err := coinbase.Calculate(amountInUSD, btcRate, ethRate)
+    if err != nil {
+        t.Fatalf("Calculate() error = %v", err)
+    }
 
-    btcAmount, ethAmount, err := coinbaseAPI.Calculate(amountInUSD, btcRate, ethRate)
-
-    if btcAmount != expectedBTC || ethAmount != expectedETH || err != nil {
-        t.Errorf("CoinbaseAPI.Calculate() = %v, %v; want %v, %v", btcAmount, ethAmount, expectedBTC, expectedETH)
+    if btcAmount != expectedBTC || ethAmount != expectedETH {
+        t.Errorf("Calculate() = %v, %v; want %v, %v", btcAmount, ethAmount, expectedBTC, expectedETH)
     }
 }
 
-// Test ExchangeRatesFetcher interface
-func TestFetchExchangeRates(t *testing.T) {
-    mockExchangeRatesFetcher := MockExchangeRatesFetcher{}
+// test the api client
+func TestClient(t *testing.T) {
+    // random API key since this API doesn't require authentication
+    apiKey := "random-api-key"
 
-    btcRate, ethRate, err := mockExchangeRatesFetcher.FetchExchangeRates()
+    // instantiate new client
+    client := coinbase.NewClient(apiKey)
 
+    // send a ping to the API and see if it responds
+    err := client.Ping()
     if err != nil {
-        t.Errorf("FetchExchangeRates() returned an error: %v", err)
-    }
-
-    if btcRate != 50000.0 || ethRate != 4000.0 {
-        t.Errorf("FetchExchangeRates() = %v, %v; want %v, %v", btcRate, ethRate, 50000.0, 4000.0)
+        t.Fatalf("Ping() error = %v", err)
     }
 }
 
+// test the exchange_rates endpoint
+func TestExchangeRates(t *testing.T) {
+    // create new client
+    client := coinbase.NewClient("random-api-key")
 
-// Test CoinbaseAPI implementation
-func TestCoinbaseAPI(t *testing.T) {
-    coinbaseAPI := CoinbaseAPI{}
-
-    btcRate, ethRate, err := coinbaseAPI.FetchExchangeRates()
+    // instantiate new client
+    exchangeRates, err := client.FetchExchangeRates()
 
     if err != nil {
-        t.Errorf("FetchExchangeRates() returned an error: %v", err)
+        t.Fatalf("GetExchangeRates() error = %v", err)
     }
 
-    if btcRate == 0.0 || ethRate == 0.0 {
-        t.Errorf("FetchExchangeRates() = %v, %v; want non-zero values", btcRate, ethRate)
+    if exchangeRates.Data.Rates["BTC"] == "" || exchangeRates.Data.Rates["ETH"] == "" {
+        t.Errorf("GetExchangeRates() = %v, %v; want %v, %v", exchangeRates.Data.Rates["BTC"], exchangeRates.Data.Rates["ETH"], "non-empty", "non-empty")
+    }
+}
+
+// test the models
+func TestExchangeRatesUnmarshal(t *testing.T) {
+    // example JSON response from the API
+    jsonStr := `{"data": {"currency": "USD", "rates": {"BTC": "0.00002", "ETH": "0.00030"}}}`
+
+    // unmarshal the JSON into ExchangeRates struct
+    var rates coinbase.ExchangeRates
+    err := json.Unmarshal([]byte(jsonStr), &rates)
+    if err != nil {
+        t.Fatalf("Unmarshal failed: %v", err)
+    }
+
+    // Assert fields in rates...
+    if rates.Data.Rates["BTC"] != "0.00002" || rates.Data.Rates["ETH"] != "0.00030" {
+        t.Errorf("Unmarshal() = %v, %v; want %v, %v", rates.Data.Rates["BTC"], rates.Data.Rates["ETH"], "0.00002", "0.00030")
     }
 }

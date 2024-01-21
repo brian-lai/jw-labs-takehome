@@ -3,10 +3,10 @@ package main
 import (
     "fmt"
     "strconv"
-    // "net/http"
-    // "io/ioutil"
     "encoding/json"
     "jw-labs-takehome/coinbase"
+    // "net/http"
+    // "io/ioutil"
 ) // "jw-labs-takehome/coinbase is the path to the coinbase package in the GOPATH
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
     amountInUSD, err := strconv.ParseFloat(amountInput, 64)
 
     if err != nil {
-        fmt.Println("Error: Invalid amount.")
+        fmt.Println("Error: Invalid amount: ", amountInput)
         return
     }
 
@@ -42,6 +42,7 @@ func main() {
     //////////////////////////////////////////////////////
 
     // using the coinbase package, the code above was replaced with the following:
+
     // instantiate a new Coinbase API client
     coinbaseAPIClient := coinbase.NewClient("api-key-that-does-not-matter")
 

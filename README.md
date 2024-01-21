@@ -1,10 +1,11 @@
 # Crypto Investor Project
 
-## Introduction
-The Crypto Investor Project is a Go application designed to simplify investing in cryptocurrencies like Bitcoin (BTC) and Ethereum (ETH). It includes a command-line tool (`crypto_investor.go`) for calculating investment splits and a Coinbase API wrapper (`coinbase` package) for fetching real-time cryptocurrency exchange rates.
+## About
+This is a CLI tool that prompts a user for $USD and spits out BTC and ETH to buy at the current rate.
+It takes an amount in USD as input and calculates how much BTC and ETH to buy based on a 70/30 split.
 
 ## Project Structure
-- `crypto_investor.go`: The main entry point of the application. It takes an amount in USD as input and calculates how much BTC and ETH to buy based on a 70/30 split.
+- `crypto_investor.go`: The main entry point of the application. 
 - `crypto_investor_test.go`:
 
 ## Coinbase API Wrapper

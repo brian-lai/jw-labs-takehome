@@ -4,6 +4,15 @@
 This is a CLI tool that prompts a user for $USD and spits out BTC and ETH to buy at the current rate.
 It takes an amount in USD as input and calculates how much BTC and ETH to buy based on a 70/30 split.
 
+### Update
+There's a branch `web_app` that actually serves this sample functionality within a simple REST api.
+I've chosen to use [mux](https://github.com/gorilla/mux) to handle routing
+#### Usage
+1. `go run cmd/main.go`
+2. GET request to `http://localhost:8080/calculate-crypto-to-buy?amount=<amount-in-usd>`
+
+The JSON response should yield the BTC and ETH to purchase
+
 ## Project Structure
 - `crypto_investor.go`: The main entry point of the application. 
 - `crypto_investor_test.go`:

@@ -1,4 +1,4 @@
-# Crypto Investor Project
+# Crypto Investor | JW Labs Takehome
 
 ## About
 This is a CLI tool that prompts a user for $USD and spits out BTC and ETH to buy at the current rate.
